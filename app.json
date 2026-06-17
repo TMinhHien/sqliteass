@@ -1,16 +1,15 @@
 {
   "expo": {
-    "name": "brave-green-apple",
-    "slug": "snack-82d43835-46eb-4e05-91ed-d761fc5d3824",
+    "name": "SQLite Contacts App",
+    "slug": "sqlite-contacts-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#6366F1"
     },
     "ios": {
       "supportsTablet": true
@@ -18,12 +17,12 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
+        "backgroundColor": "#6366F1"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "sdkVersion": "54.0.0"
   }
 }
