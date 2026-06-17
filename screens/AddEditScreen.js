@@ -202,13 +202,6 @@ export default function AddEditScreen({ contact, onBack, onSave }) {
             </TouchableOpacity>
           )}
 
-          {/* Info box: kỹ thuật đang dùng */}
-          <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>📚 Kỹ thuật SQLite đang dùng</Text>
-            <Text style={styles.infoItem}>🔐 Transaction: đảm bảo toàn vẹn INSERT/UPDATE/DELETE</Text>
-            <Text style={styles.infoItem}>⚡ Index: tìm kiếm nhanh theo name, phone</Text>
-            <Text style={styles.infoItem}>🎯 Query Optimization: SELECT cột cần thiết + WHERE</Text>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -338,26 +331,5 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
     fontSize: 15,
-  },
-
-  // Info box
-  infoBox: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 16,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#6366F1',
-  },
-  infoTitle: {
-    fontWeight: '700',
-    color: '#4338CA',
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  infoItem: {
-    color: '#4F46E5',
-    fontSize: 12,
-    marginBottom: 4,
-    lineHeight: 18,
   },
 });
