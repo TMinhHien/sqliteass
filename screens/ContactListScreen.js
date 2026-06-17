@@ -109,9 +109,7 @@ export default function ContactListScreen({ onAdd, onEdit }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Danh bạ</Text>
-        <TouchableOpacity onPress={handleAdd} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="add" size={30} color="#007AFF" />
-        </TouchableOpacity>
+        <Text style={styles.headerCount}>{contacts.length} liên hệ</Text>
       </View>
 
       {/* Search */}
@@ -155,6 +153,11 @@ export default function ContactListScreen({ onAdd, onEdit }) {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* FAB — Nút thêm liên hệ */}
+      <TouchableOpacity style={styles.fab} onPress={handleAdd} activeOpacity={0.8}>
+        <Ionicons name="add" size={32} color="#fff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -172,6 +175,25 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerTitle: { fontSize: 34, fontWeight: '700', color: '#000' },
+  headerCount: { fontSize: 13, color: '#8E8E93', paddingBottom: 6 },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    bottom: 32,
+    right: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+  },
 
   // Search
   searchBar: {
