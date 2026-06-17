@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Binary assets (PNG) — removed to fix Snack Git import
+assets/
