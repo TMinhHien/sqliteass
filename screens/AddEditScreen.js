@@ -37,8 +37,8 @@ export default function AddEditScreen({ contact, onBack, onSave }) {
   const [phoneErr, setPhoneErr] = useState('');
 
   // Reset lỗi khi user gõ
-  useEffect(() => { if (nameErr) setNameErr(''); }, [name]);
-  useEffect(() => { if (phoneErr) setPhoneErr(''); }, [phone]);
+  useEffect(() => { if (nameErr) setNameErr(''); }, [name, nameErr]);
+  useEffect(() => { if (phoneErr) setPhoneErr(''); }, [phone, phoneErr]);
 
   // ─── Lưu liên hệ (Create / Update) ───────────────────────
   const handleSave = async () => {
