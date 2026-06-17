@@ -1,39 +1,39 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import ContactListScreen from './screens/ContactListScreen';
 import AddEditScreen from './screens/AddEditScreen';
 
 /**
- * App — Simple state-based navigation (no react-navigation needed)
+ * App — Simple state-based navigation
  * Screens: 'list' | 'addEdit'
  */
 export default function App() {
   const [screen, setScreen]           = useState('list');
   const [editContact, setEditContact] = useState(null);
-  const [onSaveCallback, setOnSaveCallback] = useState(null);
+  // useRef để lưu callback — tránh lỗi useState với function
+  const reloadRef = useRef(null);
 
-  const goToAdd = useCallback((reloadFn) => {
+  const goToAdd = (reloadFn) => {
+    reloadRef.current = reloadFn;
     setEditContact(null);
-    setOnSaveCallback(() => reloadFn);
     setScreen('addEdit');
-  }, []);
+  };
 
-  const goToEdit = useCallback((contact, reloadFn) => {
+  const goToEdit = (contact, reloadFn) => {
+    reloadRef.current = reloadFn;
     setEditContact(contact);
-    setOnSaveCallback(() => reloadFn);
     setScreen('addEdit');
-  }, []);
+  };
 
-  const goToList = useCallback(() => {
-    // Gọi reload danh sách khi quay lại
-    if (onSaveCallback) onSaveCallback();
+  const goToList = () => {
+    if (reloadRef.current) reloadRef.current();
     setScreen('list');
     setEditContact(null);
-  }, [onSaveCallback]);
+  };
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       {screen === 'list' ? (
         <ContactListScreen onAdd={goToAdd} onEdit={goToEdit} />
       ) : (

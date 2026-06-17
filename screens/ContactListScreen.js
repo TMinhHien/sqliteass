@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  SectionList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  SafeAreaView,
-  StatusBar,
+  View, Text, TextInput, FlatList, TouchableOpacity,
+  StyleSheet, ActivityIndicator, SafeAreaView, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllContacts, searchContacts, deleteContact } from '../database/contactsDAO';
@@ -24,82 +17,104 @@ const getAvatarColor = (name = '') => {
 };
 const getInitials = (name = '') => {
   const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0][0]?.toUpperCase() || '?';
+  if (parts.length === 1) return (parts[0][0] || '?').toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-// ─── Nhóm danh bạ theo chữ cái đầu ──────────────────────
-const groupContacts = (contacts) => {
-  const map = {};
-  contacts.forEach((c) => {
+// ─── Chuyển danh sách phẳng → [{type:'header'|'item', ...}] ─
+const buildRows = (contacts) => {
+  const result = [];
+  let lastLetter = null;
+  contacts.forEach((c, i) => {
     const letter = (c.name[0] || '#').toUpperCase();
-    if (!map[letter]) map[letter] = [];
-    map[letter].push(c);
+    if (letter !== lastLetter) {
+      result.push({ type: 'header', id: `h_${letter}`, title: letter });
+      lastLetter = letter;
+    }
+    // Kiểm tra xem có phải item cuối trong nhóm không
+    const nextContact = contacts[i + 1];
+    const nextLetter = nextContact ? (nextContact.name[0] || '#').toUpperCase() : null;
+    result.push({ type: 'item', isLast: letter !== nextLetter, ...c });
   });
-  return Object.keys(map)
-    .sort()
-    .map((letter) => ({ title: letter, data: map[letter] }));
+  return result;
 };
 
 // ─── ContactRow ───────────────────────────────────────────
 const ContactRow = React.memo(({ item, onPress, isLast }) => (
   <TouchableOpacity
-    style={[styles.row, isLast && styles.rowLast]}
+    style={[styles.row, !isLast && styles.rowBorder]}
     onPress={() => onPress(item)}
     activeOpacity={0.45}
   >
     <View style={[styles.avatar, { backgroundColor: getAvatarColor(item.name) }]}>
       <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
     </View>
-    <View style={styles.rowContent}>
+    <View style={styles.rowRight}>
       <Text style={styles.rowName}>{item.name}</Text>
       <Ionicons name="chevron-forward" size={16} color="#C7C7CC" />
     </View>
   </TouchableOpacity>
 ));
 
-// ─── Màn hình chính ───────────────────────────────────────
+// ─── Màn hình danh bạ ─────────────────────────────────────
 export default function ContactListScreen({ onAdd, onEdit }) {
   const [contacts, setContacts] = useState([]);
   const [query, setQuery]       = useState('');
   const [loading, setLoading]   = useState(true);
 
   const loadContacts = useCallback(async (q = '') => {
+    setLoading(true);
     try {
       const data = q ? await searchContacts(q) : await getAllContacts();
-      setContacts(data);
+      setContacts(data ?? []);
     } catch (e) {
-      console.warn(e);
+      Alert.alert('Lỗi database', String(e?.message ?? e));
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Load lần đầu
   useEffect(() => { loadContacts(); }, [loadContacts]);
 
+  // Tìm kiếm debounce 300ms
   useEffect(() => {
     const t = setTimeout(() => loadContacts(query), 300);
     return () => clearTimeout(t);
   }, [query, loadContacts]);
 
-  const sections = useMemo(() => groupContacts(contacts), [contacts]);
+  const rows = useMemo(() => buildRows(contacts), [contacts]);
 
   const handleEdit = (contact) => onEdit(contact, loadContacts);
   const handleAdd  = () => onAdd(loadContacts);
 
+  const renderRow = ({ item }) => {
+    if (item.type === 'header') {
+      return <Text style={styles.sectionHeader}>{item.title}</Text>;
+    }
+    // Đầu nhóm: mở card (borderRadius top)
+    // Cuối nhóm: đóng card (borderRadius bottom)
+    return (
+      <View style={[
+        styles.card,
+        item.isLast && styles.cardLast,
+      ]}>
+        <ContactRow item={item} onPress={handleEdit} isLast={item.isLast} />
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-
-      {/* Header iOS style */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Danh bạ</Text>
-        <TouchableOpacity onPress={handleAdd} style={styles.addBtn}>
-          <Ionicons name="add" size={28} color="#007AFF" />
+        <TouchableOpacity onPress={handleAdd} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="add" size={30} color="#007AFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Search bar kiểu iOS */}
+      {/* Search */}
       <View style={styles.searchBar}>
         <Ionicons name="search" size={15} color="#8E8E93" style={{ marginRight: 6 }} />
         <TextInput
@@ -108,7 +123,6 @@ export default function ContactListScreen({ onAdd, onEdit }) {
           placeholderTextColor="#8E8E93"
           value={query}
           onChangeText={setQuery}
-          returnKeyType="search"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
@@ -117,34 +131,27 @@ export default function ContactListScreen({ onAdd, onEdit }) {
         )}
       </View>
 
+      {/* Nội dung */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
       ) : contacts.length === 0 ? (
         <View style={styles.center}>
+          <Ionicons name="person-outline" size={56} color="#C7C7CC" />
           <Text style={styles.emptyText}>
             {query ? 'Không tìm thấy liên hệ' : 'Chưa có liên hệ nào'}
           </Text>
+          {!query && (
+            <Text style={styles.emptyHint}>Nhấn "+" để thêm liên hệ mới</Text>
+          )}
         </View>
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => String(item.id)}
-          renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionHeader}>{title}</Text>
-          )}
-          renderItem={({ item, index, section }) => (
-            <View style={styles.sectionCard}>
-              <ContactRow
-                item={item}
-                onPress={handleEdit}
-                isLast={index === section.data.length - 1}
-              />
-            </View>
-          )}
+        <FlatList
+          data={rows}
+          keyExtractor={(item) => item.id ? String(item.id) : item.id}
+          renderItem={renderRow}
           contentContainerStyle={styles.listContent}
-          stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -161,17 +168,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: '#F2F2F7',
   },
-  headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#000',
-    letterSpacing: 0.3,
-  },
-  addBtn: { paddingBottom: 4 },
+  headerTitle: { fontSize: 34, fontWeight: '700', color: '#000' },
 
   // Search
   searchBar: {
@@ -186,25 +186,29 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 16, color: '#000' },
 
-  // Section
+  // Section header
   sectionHeader: {
     fontSize: 13,
     fontWeight: '600',
     color: '#6C6C70',
     paddingHorizontal: 20,
     paddingBottom: 4,
-    paddingTop: 8,
+    paddingTop: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  sectionCard: {
+
+  // Card (nhóm liên hệ cùng chữ cái)
+  card: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 0,
     overflow: 'hidden',
   },
-  listContent: { paddingBottom: 40 },
+  cardLast: {
+    marginBottom: 0,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
 
   // Row
   row: {
@@ -212,30 +216,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 14,
+  },
+  rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E5E5EA',
   },
-  rowLast: { borderBottomWidth: 0 },
-  rowContent: {
+  rowRight: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  rowName: { fontSize: 16, color: '#000', fontWeight: '400' },
+  rowName: { fontSize: 16, color: '#000' },
 
   // Avatar
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
     marginRight: 12,
   },
-  avatarText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  avatarText: { color: '#fff', fontWeight: '600', fontSize: 14 },
 
-  // Empty / Loading
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { color: '#8E8E93', fontSize: 15 },
+  // Empty / loading
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
+  emptyText: { color: '#3C3C43', fontSize: 16, fontWeight: '500' },
+  emptyHint: { color: '#8E8E93', fontSize: 13 },
+
+  listContent: { paddingBottom: 40 },
 });
