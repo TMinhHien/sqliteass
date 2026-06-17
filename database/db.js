@@ -36,22 +36,20 @@ export const getDb = async () => {
   // Seed data: chèn dữ liệu mẫu nếu bảng rỗng
   const row = await database.getFirstAsync('SELECT COUNT(*) as cnt FROM contacts');
   if (row.cnt === 0) {
-    await database.withTransactionAsync(async () => {
-      const seeds = [
-        ['Nguyễn Văn An',    '0901234567', 'an.nguyen@gmail.com'],
-        ['Trần Thị Bình',    '0912345678', 'binh.tran@gmail.com'],
-        ['Lê Hoàng Nam',     '0923456789', 'nam.le@gmail.com'],
-        ['Phạm Thu Hương',   '0934567890', 'huong.pham@gmail.com'],
-        ['Võ Minh Tuấn',     '0945678901', 'tuan.vo@gmail.com'],
-        ['Đặng Thị Lan',     '0956789012', 'lan.dang@gmail.com'],
-      ];
-      for (const [name, phone, email] of seeds) {
-        await database.runAsync(
-          'INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)',
-          [name, phone, email]
-        );
-      }
-    });
+    const seeds = [
+      ['Nguyễn Văn An',    '0901234567', 'an.nguyen@gmail.com'],
+      ['Trần Thị Bình',    '0912345678', 'binh.tran@gmail.com'],
+      ['Lê Hoàng Nam',     '0923456789', 'nam.le@gmail.com'],
+      ['Phạm Thu Hương',   '0934567890', 'huong.pham@gmail.com'],
+      ['Võ Minh Tuấn',     '0945678901', 'tuan.vo@gmail.com'],
+      ['Đặng Thị Lan',     '0956789012', 'lan.dang@gmail.com'],
+    ];
+    for (const [name, phone, email] of seeds) {
+      await database.runAsync(
+        'INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)',
+        [name, phone, email]
+      );
+    }
   }
 
   return database;

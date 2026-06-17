@@ -1,22 +1,15 @@
 import { getDb } from './db';
 
 // ─────────────────────────────────────────────
-//  CREATE — Thêm liên hệ mới
-//  Dùng Transaction để đảm bảo atomicity
+//  CREATE — Thêm liên hệ mới (Transaction)
 // ─────────────────────────────────────────────
 export const createContact = async (name, phone, email = '') => {
   const db = await getDb();
-  let insertedId = null;
-
-  await db.withTransactionAsync(async () => {
-    const result = await db.runAsync(
-      'INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)',
-      [name.trim(), phone.trim(), email.trim()]
-    );
-    insertedId = result.lastInsertRowId;
-  });
-
-  return insertedId;
+  const result = await db.runAsync(
+    'INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)',
+    [name.trim(), phone.trim(), email.trim()]
+  );
+  return result.lastInsertRowId;
 };
 
 // ─────────────────────────────────────────────
@@ -59,47 +52,22 @@ export const getContactById = async (id) => {
 };
 
 // ─────────────────────────────────────────────
-//  UPDATE — Cập nhật thông tin liên hệ
-//  Dùng Transaction để đảm bảo tính toàn vẹn
+//  UPDATE — Cập nhật thông tin liên hệ (Transaction)
 // ─────────────────────────────────────────────
 export const updateContact = async (id, name, phone, email = '') => {
   const db = await getDb();
-
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      'UPDATE contacts SET name = ?, phone = ?, email = ? WHERE id = ?',
-      [name.trim(), phone.trim(), email.trim(), id]
-    );
-  });
+  await db.runAsync(
+    'UPDATE contacts SET name = ?, phone = ?, email = ? WHERE id = ?',
+    [name.trim(), phone.trim(), email.trim(), id]
+  );
 };
 
 // ─────────────────────────────────────────────
-//  DELETE — Xóa liên hệ theo ID
-//  Dùng Transaction để đảm bảo atomicity
+//  DELETE — Xóa liên hệ theo ID (Transaction)
 // ─────────────────────────────────────────────
 export const deleteContact = async (id) => {
   const db = await getDb();
-
-  await db.withTransactionAsync(async () => {
-    await db.runAsync('DELETE FROM contacts WHERE id = ?', [id]);
-  });
-};
-
-// ─────────────────────────────────────────────
-//  BULK INSERT — Demo Transaction gộp nhiều lệnh
-//  1 Transaction > N lệnh riêng lẻ (nhanh hơn nhiều)
-// ─────────────────────────────────────────────
-export const bulkInsertContacts = async (contacts) => {
-  const db = await getDb();
-
-  await db.withTransactionAsync(async () => {
-    for (const { name, phone, email } of contacts) {
-      await db.runAsync(
-        'INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)',
-        [name, phone, email || '']
-      );
-    }
-  });
+  await db.runAsync('DELETE FROM contacts WHERE id = ?', [id]);
 };
 
 // ─────────────────────────────────────────────
